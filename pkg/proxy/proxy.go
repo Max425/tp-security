@@ -50,11 +50,11 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *Proxy) handleHTTP(w http.ResponseWriter, r *http.Request) {
+	r.Header.Del("Proxy-Connection")
 	request := convert.ParseHTTPRequest(r)
 	response := &http.Response{}
 
 	r.RequestURI = ""
-	r.Header.Del("Proxy-Connection")
 
 	httpClient := http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
