@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func ParseHTTPResponse(resp *http.Response) *core.Response {
+func ParseHTTPResponse(resp *http.Response, withBody bool) *core.Response {
 	parsedResponse := &core.Response{
 		ID:      core.GenUID(),
 		Code:    resp.StatusCode,
@@ -21,9 +21,10 @@ func ParseHTTPResponse(resp *http.Response) *core.Response {
 	}
 
 	// Parse body
-	body, _ := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	parsedResponse.Body = string(body)
-
+	if withBody {
+		body, _ := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		parsedResponse.Body = string(body)
+	}
 	return parsedResponse
 }

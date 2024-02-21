@@ -62,6 +62,7 @@ func (p *Proxy) handleHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	proxyResponse, err := httpClient.Do(r)
 	if err != nil {
+		response.StatusCode = http.StatusInternalServerError
 		log.Fatalf(err.Error())
 	}
 	defer proxyResponse.Body.Close()
@@ -78,7 +79,7 @@ func (p *Proxy) handleHTTP(w http.ResponseWriter, r *http.Request) {
 	response.Body = proxyResponse.Body
 	io.Copy(w, proxyResponse.Body)
 
-	request.Response = *convert.ParseHTTPResponse(response)
+	request.Response = *convert.ParseHTTPResponse(response, true)
 	_, err = p.Repo.RequestRepository.CreateRequest(r.Context(), request)
 	if err != nil {
 		log.Printf("Don`t save request with ID: %s", request.ID)
@@ -86,33 +87,70 @@ func (p *Proxy) handleHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *Proxy) handleHTTPS(w http.ResponseWriter, r *http.Request) {
-	//request := convert.ParseHTTPRequest(r)
+	request := convert.ParseHTTPRequest(r)
+	response := &http.Response{}
 
-	connDest, err := net.DialTimeout("tcp", r.Host, time.Second)
+	connDest, err := net.DialTimeout("tcp", r.Host, 10*time.Second)
 	if err != nil {
+		response.StatusCode = http.StatusInternalServerError
 		w.WriteHeader(http.StatusInternalServerError)
-		return
+		log.Fatalf(err.Error())
 	}
+
+	response.StatusCode = http.StatusOK
 	w.WriteHeader(http.StatusOK)
 
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
-		return
+		response.StatusCode = http.StatusInternalServerError
+		log.Fatalf(err.Error())
 	}
 
 	connSrc, _, err := hijacker.Hijack()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return
+		response.StatusCode = http.StatusInternalServerError
+		log.Fatalf(err.Error())
 	}
 
-	go broadcastData(connDest, connSrc)
-	go broadcastData(connSrc, connDest)
+	go broadcastData(connDest, connSrc, nil)
+	body := make(chan string)
+	go broadcastData(connSrc, connDest, body)
+
+	request.Response = *convert.ParseHTTPResponse(response, false)
+	request.Response.Body = <-body
+	_, err = p.Repo.RequestRepository.CreateRequest(r.Context(), request)
+	if err != nil {
+		log.Printf("Don`t save request with ID: %s", request.ID)
+	}
 }
 
-func broadcastData(to io.WriteCloser, from io.ReadCloser) {
-	io.Copy(to, from)
+func copyData(to io.Writer, from io.Reader) (string, error) {
+	buf := make([]byte, 1024)
+	var res []byte
+	for {
+		n, err := from.Read(buf)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return "", err
+		}
+		res = append(res, buf[:n]...)
+		if _, err = to.Write(buf[:n]); err != nil {
+			return "", err
+		}
+	}
+
+	return string(res), nil
+}
+
+func broadcastData(to io.WriteCloser, from io.ReadCloser, body chan string) {
+	data, _ := copyData(to, from)
+	if body != nil {
+		body <- data
+	}
 	to.Close()
 	from.Close()
 }

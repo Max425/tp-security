@@ -11,19 +11,12 @@ type RequestRepository interface {
 	GetRequestByID(ctx context.Context, ID string) (*core.Request, error)
 }
 
-type ResponseRepository interface {
-	CreateResponse(ctx context.Context, response *core.Response) (*core.Response, error)
-	GetResponseByID(ctx context.Context, ID string) (*core.Response, error)
-}
-
 type Repository struct {
-	RequestRepository  RequestRepository
-	ResponseRepository ResponseRepository
+	RequestRepository
 }
 
 func NewRepository(dbConn *mongo.Database) *Repository {
 	return &Repository{
-		ResponseRepository: NewResponseRepository(dbConn),
-		RequestRepository:  NewRequestRepository(dbConn),
+		RequestRepository: NewRequestRepository(dbConn),
 	}
 }

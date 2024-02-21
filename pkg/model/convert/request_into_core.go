@@ -16,7 +16,7 @@ func ParseHTTPRequest(r *http.Request) *core.Request {
 	parsedRequest := &core.Request{
 		ID:        core.GenUID(),
 		Method:    r.Method,
-		Path:      r.URL.Path,
+		Path:      r.RequestURI,
 		Headers:   make(map[string]string),
 		Cookies:   make(map[string]string),
 		GetParams: make(map[string]string),
