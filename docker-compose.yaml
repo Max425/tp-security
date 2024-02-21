@@ -4,14 +4,14 @@ volumes:
   mongodb_data_container: { }
 
 services:
-#  app:
-#    build: ./
-#    command: ./tp-security
-#    ports:
-#      - 8000:8000
-#      - 8080:8080
-#    depends_on:
-#      - mongodb_container
+  app:
+    build: ./
+    command: ./tp-security
+    ports:
+      - 8000:8000
+      - 8080:8080
+    depends_on:
+      - mongodb_container
 
   mongodb_container:
     image: mongo:latest

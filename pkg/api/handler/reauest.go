@@ -197,5 +197,7 @@ func execute(request core.Request) (string, error) {
 		return "", fmt.Errorf("ошибка при выполнении команды curl: %v, вывод: %s", err, out)
 	}
 
-	return string(out), nil
+	res := strings.Split(string(out), "<html>")
+	result := strings.Join(res[len(res)-1:], "<html>")
+	return "<html>" + result, nil
 }

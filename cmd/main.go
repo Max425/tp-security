@@ -13,14 +13,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 const (
 	addr     = ":8080"
 	certsDir = "certs"
-	cs       = "mongodb://root:rootpassword@mongodb_container:27017"
-	cs1      = "mongodb://root:rootpassword@localhost:27017"
+	cs1      = "mongodb://root:rootpassword@mongodb_container:27017"
+	//cs1      = "mongodb://root:rootpassword@localhost:27017"
 )
 
 // @title Security API
@@ -30,7 +29,7 @@ const (
 // @host localhost:8000
 // @BasePath /
 func main() {
-	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	ctx := context.Background()
 
 	// -------------------- Init mongo -------------------- //
 	mongo, err := repository.NewMongoClient(ctx, repository.MongoConfig{
