@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"bytes"
 	"io"
 	"log"
 	"main/pkg/model/convert"
@@ -76,10 +77,13 @@ func (p *Proxy) handleHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(proxyResponse.StatusCode)
 	response.StatusCode = proxyResponse.StatusCode
 
-	response.Body = proxyResponse.Body
-	io.Copy(w, proxyResponse.Body)
+	var buf bytes.Buffer
+	mw := io.MultiWriter(&buf, w)
+	io.Copy(mw, proxyResponse.Body)
 
-	request.Response = *convert.ParseHTTPResponse(response, true)
+	resp := *convert.ParseHTTPResponse(response, false)
+	resp.Body = buf.String()
+	request.Response = resp
 	_, err = p.Repo.RequestRepository.CreateRequest(r.Context(), request)
 	if err != nil {
 		log.Printf("Don`t save request with ID: %s", request.ID)
@@ -126,31 +130,15 @@ func (p *Proxy) handleHTTPS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func copyData(to io.Writer, from io.Reader) (string, error) {
-	buf := make([]byte, 1024)
-	var res []byte
-	for {
-		n, err := from.Read(buf)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return "", err
-		}
-		res = append(res, buf[:n]...)
-		if _, err = to.Write(buf[:n]); err != nil {
-			return "", err
-		}
-	}
-
-	return string(res), nil
-}
-
 func broadcastData(to io.WriteCloser, from io.ReadCloser, body chan string) {
-	data, _ := copyData(to, from)
+	defer func() {
+		to.Close()
+		from.Close()
+	}()
+	var buf bytes.Buffer
+	mw := io.MultiWriter(&buf, to)
+	io.Copy(mw, from)
 	if body != nil {
-		body <- data
+		body <- buf.String()
 	}
-	to.Close()
-	from.Close()
 }
