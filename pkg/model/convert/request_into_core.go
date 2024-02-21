@@ -38,8 +38,8 @@ func ParseHTTPRequest(r *http.Request) *core.Request {
 	}
 
 	// Add POST parameters
-	if r.Method == http.MethodPost &&
-		strings.Contains(r.Header.Get("Content-Type"), contentTypeParsePost) {
+	if r.Method == http.MethodPost {
+		// && strings.Contains(r.Header.Get("Content-Type"), contentTypeParsePost)
 		body, _ := ioutil.ReadAll(r.Body)
 		defer r.Body.Close()
 
