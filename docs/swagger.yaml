@@ -65,7 +65,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/core.Request'
+            type: string
         "500":
           description: Internal Server Error
           schema:
@@ -133,7 +133,9 @@ paths:
         "200":
           description: OK
           schema:
-            type: boolean
+            items:
+              type: string
+            type: array
         "500":
           description: Internal Server Error
           schema:
