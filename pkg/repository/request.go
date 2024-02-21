@@ -24,11 +24,33 @@ func (r *RequestRepositoryImpl) CreateRequest(ctx context.Context, request *core
 	return request, nil
 }
 
-func (r *RequestRepositoryImpl) GetRequestByID(ctx context.Context, ID string) (*core.Request, error) {
+func (r *RequestRepositoryImpl) GetRequestByID(ctx context.Context, ID string) (core.Request, error) {
 	var request core.Request
 	err := r.coll.FindOne(ctx, bson.M{"_id": ID}).Decode(&request)
 	if err != nil {
+		return core.Request{}, err
+	}
+	return request, nil
+}
+
+func (r *RequestRepositoryImpl) GetAllRequests(ctx context.Context) ([]core.Request, error) {
+	cursor, err := r.coll.Find(ctx, bson.M{})
+	if err != nil {
 		return nil, err
 	}
-	return &request, nil
+	defer cursor.Close(ctx)
+
+	var requests []core.Request
+	for cursor.Next(ctx) {
+		var request core.Request
+		if err := cursor.Decode(&request); err != nil {
+			return nil, err
+		}
+		requests = append(requests, request)
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return requests, nil
 }

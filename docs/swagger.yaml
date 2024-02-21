@@ -1,0 +1,144 @@
+basePath: /
+definitions:
+  core.Request:
+    properties:
+      cookies:
+        additionalProperties:
+          type: string
+        type: object
+      get_params:
+        additionalProperties:
+          type: string
+        type: object
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      id:
+        type: string
+      method:
+        type: string
+      path:
+        type: string
+      post_params:
+        additionalProperties:
+          type: string
+        type: object
+      response:
+        $ref: '#/definitions/core.Response'
+    type: object
+  core.Response:
+    properties:
+      body:
+        type: string
+      code:
+        type: integer
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      id:
+        type: string
+      message:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: API Server
+  title: Security API
+  version: "1.0"
+paths:
+  /repeat/{uid}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: request UID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.Request'
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: repeat request
+      tags:
+      - request
+  /requests:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/core.Request'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: get all requests
+      tags:
+      - request
+  /requests/{uid}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: request UID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/core.Request'
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: get 1 request
+      tags:
+      - request
+  /scan/{uid}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: request UID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: scan request
+      tags:
+      - request
+swagger: "2.0"
